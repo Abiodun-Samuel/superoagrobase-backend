@@ -19,9 +19,10 @@ Route::middleware('guest')->group(function () {
     Route::get('categories', [CategoryController::class, 'index']);
 
     Route::prefix('products')->group(function () {
+        Route::get('/', [ProductController::class, 'index']);
         Route::get('featured', [ProductController::class, 'getFeaturedProducts']);
         Route::get('trending', [ProductController::class, 'getTrendingProducts']);
-        Route::get('{product}', [ProductController::class, 'show']); // last!
+        Route::get('{product}', [ProductController::class, 'show']);
     });
 });
 

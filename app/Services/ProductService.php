@@ -10,7 +10,6 @@ class ProductService
     public function getFeaturedProducts(int $limit = 16): Collection
     {
         return Product::query()
-            ->with(['category', 'subcategory'])
             ->where('is_featured', true)
             ->inRandomOrder()
             ->limit($limit)
@@ -19,7 +18,6 @@ class ProductService
     public function getTrendingProducts(int $limit = 16): Collection
     {
         return Product::query()
-            ->with(['category', 'subcategory'])
             ->where(function ($query) {
                 $query->orWhere('stock', '>', 10);
                 $query->orWhere('view_count', '>', 500);

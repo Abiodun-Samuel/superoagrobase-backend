@@ -14,6 +14,13 @@ class ProductController extends Controller
         protected ProductService $productService
     ) {}
 
+    public function index()
+    {
+        $products = Product::get();
+        $data = ProductResource::collection($products);
+        return $this->successResponse($data, '');
+    }
+
     public function show(Request $request, Product $product): JsonResponse
     {
         if ($request->query('increment_view') === 'true') {
