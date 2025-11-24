@@ -19,7 +19,6 @@ class ProductController extends Controller
         if ($request->query('increment_view') === 'true') {
             $product->increment('view_count');
         }
-        // $product->with(['reviews']);
         return $this->successResponse(new ProductResource($product));
     }
 

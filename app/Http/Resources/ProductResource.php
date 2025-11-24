@@ -31,7 +31,7 @@ class ProductResource extends JsonResource
             'badges' => $this->computeBadges(),
             'category' => CategoryResource::make($this->whenLoaded('category')),
             'subcategory' => SubcategoryResource::make($this->whenLoaded('subcategory')),
-            'reviews' => ReviewResource::make($this->whenLoaded('reviews')),
+            'reviews' => ReviewResource::collection($this->whenLoaded('reviews')),
             'reviews_summary' => $this->whenLoaded('reviews', function () {
                 $reviews = $this->reviews;
                 return [
