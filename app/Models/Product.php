@@ -37,7 +37,9 @@ class Product extends Model
         'discount_price' => 'decimal:2',
         'stock' => 'integer',
     ];
+
     protected $with = ['category', 'subcategory', 'reviews'];
+
     public function getRouteKeyName(): string
     {
         return 'slug';

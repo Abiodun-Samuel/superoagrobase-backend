@@ -1,6 +1,5 @@
 <?php
 
-
 use App\Http\Middleware\ForceJsonResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -39,11 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
         ]);
-
-        $middleware->api(prepend: [
-            \Illuminate\Http\Middleware\HandleCors::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // app('App\Exceptions\ApiExceptionHandler'::class)->register($exceptions);
+        app('App\Exceptions\ApiExceptionHandler'::class)->register($exceptions);
     })->create();

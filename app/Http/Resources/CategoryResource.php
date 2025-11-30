@@ -19,7 +19,7 @@ class CategoryResource extends JsonResource
                 fn() => $this->products->count()
             ),
             'badges' => $this->computeBadges(),
-            'subcategory' => SubcategoryResource::make($this->whenLoaded('subcategory')),
+            'subcategory' => SubcategoryResource::collection($this->whenLoaded('subcategory')),
         ];
     }
     protected function computeBadges(): array

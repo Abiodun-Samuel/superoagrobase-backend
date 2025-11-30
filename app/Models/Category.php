@@ -13,6 +13,10 @@ class Category extends Model
         'slug',
         'image',
     ];
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
     public function subcategory()
     {
         return $this->hasMany(Subcategory::class);

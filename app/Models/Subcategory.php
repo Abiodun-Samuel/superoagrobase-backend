@@ -14,4 +14,12 @@ class Subcategory extends Model
         'image',
         'category_id'
     ];
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
 }

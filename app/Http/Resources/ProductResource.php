@@ -31,17 +31,16 @@ class ProductResource extends JsonResource
             'badges' => $this->computeBadges(),
             'category' => CategoryResource::make($this->whenLoaded('category')),
             'subcategory' => SubcategoryResource::make($this->whenLoaded('subcategory')),
-            'reviews' => ReviewResource::collection($this->whenLoaded('reviews')),
             'reviews_summary' => $this->whenLoaded('reviews', function () {
                 $reviews = $this->reviews;
                 return [
-                    'reviews_count' => $reviews->count(),
+                    'reviews_count'   => $reviews->count(),
                     'average_ratings' => round($reviews->avg('rating'), 1),
                 ];
-            }, [
-                'reviews_count' => 0,
-                'average_ratings' => 0
-            ]),
+            }) ?: [
+                'reviews_count'   => 0,
+                'average_ratings' => 0,
+            ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
