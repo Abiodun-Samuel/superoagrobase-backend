@@ -46,18 +46,16 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'date_of_birth' => 'date',
-            'last_login_at' => 'datetime',
-            'billing_details' => 'array',
-            'shipping_details' => 'array',
-            'is_marketing_subscribed' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'date_of_birth' => 'date',
+        'last_login_at' => 'datetime',
+        'billing_details' => 'array',
+        'shipping_details' => 'array',
+        'is_marketing_subscribed' => 'boolean',
+    ];
+
     protected array $completionFields = [
         'first_name',
         'last_name',
@@ -93,5 +91,15 @@ class User extends Authenticatable
             ->count();
 
         return intval(($filled / count($this->completionFields)) * 100);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function cartItems()
+    {
+        return $this->hasMany(CartItem::class);
     }
 }

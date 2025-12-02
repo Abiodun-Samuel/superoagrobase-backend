@@ -43,4 +43,16 @@ class Cart extends Model
     {
         return $this->unavailable_items->isNotEmpty();
     }
+
+    public function getAvailabilityIssuesAttribute(): array
+    {
+        return $this->unavailable_items->map(function ($item) {
+            return [
+                'product_slug' => $item->product?->slug,
+                'product_title' => $item->product?->title,
+                'product_image' => $item->product?->image,
+                'product_issue' => $item->getIssue(),
+            ];
+        })->toArray();
+    }
 }

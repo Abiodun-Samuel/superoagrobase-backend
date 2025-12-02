@@ -33,8 +33,8 @@ class CartResource extends JsonResource
             ]),
 
             'availability' => $this->when($this->relationLoaded('items'), fn() => [
-                'has_unavailable_items' => $this->hasUnavailableItems(),
-                'unavailable_count' => $this->unavailable_items->count(),
+                'has_issues' => $this->hasUnavailableItems(),
+                'issues' => $this->when($this->hasUnavailableItems(), $this->availability_issues),
             ]),
         ];
     }

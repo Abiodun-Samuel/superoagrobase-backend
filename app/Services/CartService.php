@@ -115,28 +115,13 @@ class CartService
     public function getCart(?int $userId, string $sessionId): ?Cart
     {
         return Cart::with(['items.product'])
-            ->where('session_id', $sessionId)
-            ->when($userId !== null, fn($q) => $q->where('user_id', $userId))
+            ->where(function ($query) use ($userId, $sessionId) {
+                $query->where('session_id', $sessionId);
+
+                if ($userId !== null) {
+                    $query->orWhere('user_id', $userId);
+                }
+            })
             ->first();
     }
-
-    // public function validateCart(Cart $cart): array
-    // {
-    //     $issues = [];
-
-    //     foreach ($cart->items as $item) {
-    //         if (!$item->isAvailable()) {
-    //             $issues[] = [
-    //                 'item_id' => $item->id,
-    //                 'product_id' => $item->product_id,
-    //                 'product_title' => $item->product->title,
-    //                 'issue' => 'Product is out of stock or unavailable',
-    //                 'requested_quantity' => $item->quantity,
-    //                 'available_stock' => $item->product->stock,
-    //             ];
-    //         }
-    //     }
-
-    //     return $issues;
-    // }
 }

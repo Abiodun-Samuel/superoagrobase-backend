@@ -18,7 +18,12 @@ class CartController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $request->validate(['session_id' => ['required', 'string', 'uuid']]);
+        $request->validate(
+            [
+                'user_id' => 'nullable|string|max:255',
+                'session_id' => 'required|string|uuid'
+            ]
+        );
 
         $cart = $this->cartService->getCart($request->user_id, $request->session_id);
 
@@ -102,36 +107,4 @@ class CartController extends Controller
             'Cart has been cleared successfully'
         );
     }
-
-    // public function validate(Request $request): JsonResponse
-    // {
-    //     $request->validate([
-    //         'session_id' => ['required', 'string', 'uuid'],
-    //     ]);
-
-    //     $cart = $this->cartService->getCart(
-    //         $request->user()?->id,
-    //         $request->session_id
-    //     );
-
-    //     if (!$cart) {
-    //         return $this->errorResponse('Cart is empty', Response::HTTP_BAD_REQUEST);
-    //     }
-
-    //     $issues = $this->cartService->validateCart($cart);
-
-    //     if (empty($issues)) {
-    //         return $this->successResponse(
-    //             ['valid' => true],
-    //             'Cart is valid for checkout'
-    //         );
-    //     }
-    //     return $this->successResponse(
-    //         [
-    //             'valid' => false,
-    //             'issues' => $issues,
-    //         ],
-    //         'Cart has availability issues'
-    //     );
-    // }
 }

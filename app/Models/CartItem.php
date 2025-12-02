@@ -36,4 +36,17 @@ class CartItem extends Model
     {
         return $this->product && $this->product->stock >= $this->quantity;
     }
+    public function getIssue(): string
+    {
+        if (!$this->product) {
+            return 'This product is currently unavailable.';
+        }
+        if ($this->product->stock <= 0 || $this->product->status === 'out_of_stock') {
+            return 'This product is out of stock at the moment.';
+        }
+        if ($this->product->stock < $this->quantity) {
+            return 'The requested quantity is not available in stock.';
+        }
+        return 'This product is available and ready for purchase.';
+    }
 }

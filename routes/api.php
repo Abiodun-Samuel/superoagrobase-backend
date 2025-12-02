@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\NewsletterSubscriptionController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
@@ -35,7 +36,6 @@ Route::middleware('guest')->group(function () {
         Route::put('/items/{cartItemId}', [CartController::class, 'update']);
         Route::delete('/items/{cartItemId}', [CartController::class, 'destroy']);
         Route::post('/clear', [CartController::class, 'clear']);
-        // Route::post('/validate', [CartController::class, 'validate']); // New endpoint
     });
 
     Route::prefix('reviews')->group(function () {
@@ -43,4 +43,9 @@ Route::middleware('guest')->group(function () {
     });
 });
 
-Route::middleware('auth:sanctum')->group(function () {});
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::prefix('orders')->group(function () {
+        Route::post('/complete', [OrderController::class, 'completeOrder']);
+    });
+});

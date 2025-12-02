@@ -4,7 +4,7 @@ namespace App\Enums;
 
 enum AuthProviderEnum: string
 {
-    case LOCAL = 'local'; // email and password
+    case LOCAL = 'local';
     case GOOGLE = 'google';
     case FACEBOOK = 'facebook';
     case APPLE = 'apple';
