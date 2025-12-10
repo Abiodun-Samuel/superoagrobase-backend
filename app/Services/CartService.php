@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 
 class CartService
 {
-    public function getOrCreateCart(?int $userId, string $sessionId): Cart
+    public function getOrCreateCart(string $sessionId, ?int $userId,): Cart
     {
 
         $cart = Cart::where('session_id', $sessionId)->first();
@@ -35,7 +35,7 @@ class CartService
     public function addItem(array $data): array
     {
         $product = Product::findOrFail($data['product_id']);
-        $cart = $this->getOrCreateCart($data['user_id'] ?? null, $data['session_id']);
+        $cart = $this->getOrCreateCart($data['session_id'], $data['user_id'] ?? null);
 
         $existingItem = CartItem::where('cart_id', $cart->id)
             ->where('product_id', $product->id)
@@ -68,7 +68,7 @@ class CartService
     {
         $cartItem = CartItem::with('product')->findOrFail($cartItemId);
 
-        $cart = $this->getOrCreateCart($data['user_id'] ?? null, $data['session_id']);
+        $cart = $this->getOrCreateCart($data['session_id'], $data['user_id'] ?? null);
 
         if ($cartItem->cart_id !== $cart->id) {
             throw new ValidationException('You do not have permission to update this cart item.');
@@ -90,10 +90,10 @@ class CartService
         ];
     }
 
-    public function removeItem(int $cartItemId, ?int $userId, string $sessionId): array
+    public function removeItem(int $cartItemId, string $sessionId, ?int $userId): array
     {
         $cartItem = CartItem::findOrFail($cartItemId);
-        $cart = $this->getOrCreateCart($userId, $sessionId);
+        $cart = $this->getOrCreateCart($sessionId, $userId);
 
         if ($cartItem->cart_id !== $cart->id) {
             throw new ValidationException('You do not have permission to remove this cart item.');
@@ -106,13 +106,13 @@ class CartService
         ];
     }
 
-    public function clearCart(?int $userId, string $sessionId): void
+    public function clearCart(string $sessionId, ?int $userId): void
     {
-        $cart = $this->getOrCreateCart($userId, $sessionId);
+        $cart = $this->getOrCreateCart($sessionId, $userId);
         CartItem::where('cart_id', $cart->id)->delete();
     }
 
-    public function getCart(?int $userId, string $sessionId): ?Cart
+    public function getCart(string $sessionId, ?int $userId): ?Cart
     {
         return Cart::with(['items.product'])
             ->where(function ($query) use ($userId, $sessionId) {

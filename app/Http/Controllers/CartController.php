@@ -25,7 +25,7 @@ class CartController extends Controller
             ]
         );
 
-        $cart = $this->cartService->getCart($request->user_id, $request->session_id);
+        $cart = $this->cartService->getCart($request->session_id, $request->user_id);
 
         if (!$cart) {
             return $this->successResponse(
@@ -78,8 +78,8 @@ class CartController extends Controller
         try {
             $result = $this->cartService->removeItem(
                 $cartItemId,
-                $request->user_id,
-                $request->session_id
+                $request->session_id,
+                $request->user_id
             );
 
             return $this->successResponse(
@@ -99,8 +99,8 @@ class CartController extends Controller
             'session_id' => ['required', 'string', 'uuid'],
         ]);
         $this->cartService->clearCart(
+            $request->session_id,
             $request->user_id,
-            $request->session_id
         );
         return $this->successResponse(
             null,

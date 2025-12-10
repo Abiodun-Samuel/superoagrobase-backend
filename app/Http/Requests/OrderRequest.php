@@ -28,16 +28,12 @@ class OrderRequest extends FormRequest
             'delivery_details.phone_number' => 'required|string|max:20',
             'delivery_details.whatsapp_number' => 'nullable|string|max:20',
 
+            'payment_gateway' => 'nullable|string',
+
             'delivery_details.address' => [Rule::requiredIf($isWaybill), 'string', 'max:500'],
             'delivery_details.city' => [Rule::requiredIf($isWaybill), 'string', 'max:500'],
             'delivery_details.state' => [Rule::requiredIf($isWaybill), 'string', 'max:500'],
             'delivery_details.country' => [Rule::requiredIf($isWaybill), 'string',  'max:255'],
-
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id',],
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price_at_purchase' => 'required|numeric|min:0',
-            'items.*.subtotal' => 'required|numeric|min:0',
 
             'delivery_method' => 'required|in:pickup,waybill',
             'payment_method' => ['required', Rule::in(PaymentStatus::values())],

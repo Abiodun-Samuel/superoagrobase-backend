@@ -5,7 +5,9 @@ namespace App\Enums;
 enum PaymentStatus: string
 {
     case PENDING = 'pending';           // Payment not yet processed
+    case SUCSESS = 'success';           // Payment successful
     case PAID = 'paid';                 // Payment successful
+    case LATER = 'later';                 // Payment successful
     case ONLINE = 'online';                 // Payment successful
     case FAILED = 'failed';             // Payment failed
     case REFUNDED = 'refunded';         // Payment refunded

@@ -40,8 +40,6 @@ class OrderService
                 $this->saveUserDeliveryDetails($user, $deliveryDetails);
             }
 
-            // $this->clearCart($user);
-
             return $order;
         });
     }
@@ -52,8 +50,8 @@ class OrderService
             'order_id' => $order->id,
             'product_id' => $itemData['product_id'],
             'quantity' => $itemData['quantity'],
-            'price_at_purchase' => $itemData['price_at_purchase'],
-            'subtotal' => $itemData['subtotal'],
+            'price_at_purchase' => $itemData['product']['price'],
+            'subtotal' => $itemData['quantity'] * $itemData['product']['price'],
         ]);
     }
 
@@ -62,10 +60,5 @@ class OrderService
         $user->update([
             'shipping_details' => $deliveryDetails,
         ]);
-    }
-
-    protected function clearCart(User $user): void
-    {
-        $user->cartItems()->delete();
     }
 }

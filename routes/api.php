@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\NewsletterSubscriptionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -41,11 +43,18 @@ Route::middleware('guest')->group(function () {
     Route::prefix('reviews')->group(function () {
         Route::get('/', [ReviewController::class, 'index']);
     });
+
+    Route::post('/transactions/webhook', [TransactionController::class, 'webhook']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-
+    //Orders
     Route::prefix('orders')->group(function () {
+        Route::get('/{order}', [OrderController::class, 'show']);
         Route::post('/complete', [OrderController::class, 'completeOrder']);
+    });
+    //Transactions
+    Route::prefix('transactions')->group(function () {
+        Route::get('/verify', [TransactionController::class, 'verify']);
     });
 });

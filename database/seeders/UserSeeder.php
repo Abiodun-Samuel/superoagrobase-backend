@@ -143,7 +143,7 @@ class UserSeeder extends Seeder
                 'first_name' => $item['first_name'],
                 'last_name'  => $item['last_name'],
                 'email'      => $item['email'],
-                'password'   => $item['email'] == 'abiodunsamyemi@gmail.com' ? Hash::make($item['phone']) : $item['password'],
+                'password'   => $item['email'] == 'abiodunsamyemi@gmail.com' ? Hash::make('password') : $item['password'],
                 'avatar'     => $item['avatar'],
 
                 'phone_number' => $item['phone'],
