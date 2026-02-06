@@ -39,6 +39,8 @@ class User extends Authenticatable
         'company_website',
         'billing_details',
         'shipping_details',
+        'email_verification_token',
+        'email_verification_expires_at',
     ];
 
     protected $hidden = [
@@ -48,6 +50,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'email_verification_expires_at' => 'datetime',
         'password' => 'hashed',
         'date_of_birth' => 'date',
         'last_login_at' => 'datetime',
@@ -76,6 +79,7 @@ class User extends Authenticatable
         'company_website',
         'billing_details',
         'shipping_details',
+        'email_verified_at',
     ];
 
 

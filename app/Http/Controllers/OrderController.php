@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoleEnum;
 use App\Exceptions\TransactionException;
 use App\Http\Requests\OrderRequest;
 use App\Http\Resources\OrderResource;
@@ -10,6 +11,7 @@ use App\Services\CartService;
 use App\Services\OrderService;
 use App\Services\TransactionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
@@ -22,6 +24,36 @@ class OrderController extends Controller
         private readonly TransactionService $transactionService
     ) {
         $this->frontendUrl = config('app.frontendUrl');
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $isAdmin = $request->user()->hasRole([RoleEnum::SUPER_ADMIN->value, RoleEnum::ADMIN->value]);
+
+        $userId = $isAdmin ? null : $request->user()->id;
+
+        $filters = $request->only([
+            'reference',
+            'status',
+            'payment_status',
+            'payment_method',
+            'delivery_method',
+            'user_id',
+            'from_date',
+            'to_date',
+            'min_total',
+            'max_total',
+            'search',
+            'sort_by',
+            'sort_direction',
+        ]);
+
+        $orders = $this->orderService->getOrders($filters, $userId);
+
+        return $this->successResponse(
+            OrderResource::collection($orders),
+            'Orders retrieved successfully'
+        );
     }
 
     public function completeOrder(OrderRequest $request): JsonResponse
@@ -103,6 +135,6 @@ class OrderController extends Controller
 
     private function getRedirectUrl($order): string
     {
-        return $this->frontendUrl . '/dashboard/orders/' . $order->reference;
+        return $this->frontendUrl . '/account/orders/' . $order->reference;
     }
 }

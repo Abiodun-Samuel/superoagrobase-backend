@@ -2,40 +2,28 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Default Mailer
-    |--------------------------------------------------------------------------
-    |
-    | This option controls the default mailer that is used to send all email
-    | messages unless another mailer is explicitly specified when sending
-    | the message. All additional mailers can be configured within the
-    | "mailers" array. Examples of each type of mailer are provided.
-    |
-    */
+    'template' => [
+        'contact' => env('CONTACT_MAIL_TEMPLATE_ID'),
+        'contact_auto_reply' => env('CONTACT_MAIL_AUTO_REPLY_TEMPLATE_ID'),
+        'welcome_verification' => env('WELCOME_VERIFICATION_TEMPLATE_ID'),
+        'email_verification' => env('EMAIL_VERIFICATION_TEMPLATE_ID'),
+        'password_reset' => env('PASSWORD_RESET_TEMPLATE_ID'),
+        'password_reset_confirmation' => env('PASSWORD_RESET_CONFIRMATION_TEMPLATE_ID'),
+        'vendor_request_admin' => env('VENDOR_REQUEST_ADMIN_TEMPLATE_ID'),
+        'vendor_request_approved' => env('MAIL_TEMPLATE_VENDOR_REQUEST_APPROVED'),
+        'vendor_request_rejected' => env('MAIL_TEMPLATE_VENDOR_REQUEST_REJECTED'),
+    ],
+
 
     'default' => env('MAIL_MAILER', 'log'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Mailer Configurations
-    |--------------------------------------------------------------------------
-    |
-    | Here you may configure all of the mailers used by your application plus
-    | their respective settings. Several examples have been configured for
-    | you and you are free to add your own as your application requires.
-    |
-    | Laravel supports a variety of mail "transport" drivers that can be used
-    | when delivering an email. You may specify which one you're using for
-    | your mailers below. You may also add additional mailers if needed.
-    |
-    | Supported: "smtp", "sendmail", "mailgun", "ses", "ses-v2",
-    |            "postmark", "resend", "log", "array",
-    |            "failover", "roundrobin"
-    |
-    */
 
     'mailers' => [
+
+        'zeptomail' => [
+            'base_url' => env('ZEPTO_BASE_URL'),
+            'api_key' => env('ZEPTO_API_KEY'),
+        ],
 
         'smtp' => [
             'transport' => 'smtp',
@@ -99,20 +87,9 @@ return [
 
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Global "From" Address
-    |--------------------------------------------------------------------------
-    |
-    | You may wish for all emails sent by your application to be sent from
-    | the same address. Here you may specify a name and address that is
-    | used globally for all emails that are sent by your application.
-    |
-    */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', 'contact@superoagrobase.com'),
+        'name' => env('MAIL_FROM_NAME', 'Admin'),
     ],
-
 ];

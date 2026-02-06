@@ -16,9 +16,31 @@ class OrderResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'order_number' => $this->order_number,
-            'user' => new UserResource($this->whenLoaded('user')),
+            'reference' => $this->reference,
+            'user' => $this->whenLoaded('user', function () {
+                return [
+                    'id'        => $this->user->id,
+                    'full_name' => trim($this->user->first_name . ' ' . $this->user->last_name),
+                    'avatar' => $this->user->avatar,
+                    'email' => $this->user->email,
+                    'phone_number' => $this->user->phone_number,
+                ];
+            }),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
+            'transactions' => $this->whenLoaded('transactions', function () {
+                return $this->transactions->map(function ($transaction) {
+                    return [
+                        'id' => $transaction->id,
+                        'reference' => $transaction->reference,
+                        'transaction_reference' => $transaction->transaction_reference,
+                        'amount' => $transaction->amount,
+                        'status' => $transaction->status,
+                        'channel' => $transaction->channel,
+                        'currency' => $transaction->currency,
+                        'created_at' => $transaction->created_at->toISOString(),
+                    ];
+                });
+            }),
             'delivery_details' => $this->delivery_details,
             'delivery_method' => $this->delivery_method,
             'payment_method' => $this->payment_method,

@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'SuperoAgrobase'),
     'frontendUrl' => env('FRONTEND_URL', 'http://localhost:3000'),
 
     /*

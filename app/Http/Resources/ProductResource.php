@@ -25,9 +25,7 @@ class ProductResource extends JsonResource
             'sales_count' => $this->sales_count,
             'status' => $this->status,
             'pack_size' => $this->pack_size,
-            'price' => $this->price,
             'discount_price' => $this->discount_price,
-            'stock' => $this->stock,
             'badges' => $this->computeBadges(),
             'category' => CategoryResource::make($this->whenLoaded('category')),
             'subcategory' => SubcategoryResource::make($this->whenLoaded('subcategory')),
@@ -43,6 +41,32 @@ class ProductResource extends JsonResource
             ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+
+            // 'price' => $this->price,
+            // 'stock' => $this->stock,
+
+            // Pricing - Smart fallback to cheapest available vendor
+            'price' => $this->when(
+                isset($this->calculated_price),
+                fn() => (float) $this->calculated_price,
+                fn() => (float) $this->final_price
+            ),
+
+            // Stock - Sum of vendor stock or base stock
+            'stock' => $this->when(
+                isset($this->calculated_stock),
+                fn() => (int) $this->calculated_stock,
+                fn() => (int) $this->final_stock
+            ),
+
+            'base_price' => (float) $this->price,
+            'base_stock' => $this->stock,
+
+            'has_vendor_pricing' => $this->has_vendor_pricing,
+            'vendors' => $this->when(
+                $this->relationLoaded('availableVendorProducts') || $request->boolean('include_vendors'),
+                fn() => $this->getVendorsWithPrices()
+            ),
         ];
     }
     protected function computeBadges(): array
