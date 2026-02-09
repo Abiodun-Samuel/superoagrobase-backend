@@ -6,7 +6,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL'),  'http://localhost:3000', 'https://superoagrobase-frontend.vercel.app',],
+    'allowed_origins' => [env('FRONTEND_URL'), 'https://superoagrobase.com', 'https://www.superoagrobase.com'],
 
     'allowed_origins_patterns' => [],
 
