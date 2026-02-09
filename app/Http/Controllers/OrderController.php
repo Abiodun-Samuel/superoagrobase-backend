@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\RoleEnum;
 use App\Exceptions\TransactionException;
+use App\Http\Requests\BulkUpdateOrderStatusRequest;
 use App\Http\Requests\OrderRequest;
+use App\Http\Requests\UpdateOrderRequest;
+use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\CartService;
@@ -24,36 +27,6 @@ class OrderController extends Controller
         private readonly TransactionService $transactionService
     ) {
         $this->frontendUrl = config('app.frontendUrl');
-    }
-
-    public function index(Request $request): JsonResponse
-    {
-        $isAdmin = $request->user()->hasRole([RoleEnum::SUPER_ADMIN->value, RoleEnum::ADMIN->value]);
-
-        $userId = $isAdmin ? null : $request->user()->id;
-
-        $filters = $request->only([
-            'reference',
-            'status',
-            'payment_status',
-            'payment_method',
-            'delivery_method',
-            'user_id',
-            'from_date',
-            'to_date',
-            'min_total',
-            'max_total',
-            'search',
-            'sort_by',
-            'sort_direction',
-        ]);
-
-        $orders = $this->orderService->getOrders($filters, $userId);
-
-        return $this->successResponse(
-            OrderResource::collection($orders),
-            'Orders retrieved successfully'
-        );
     }
 
     public function completeOrder(OrderRequest $request): JsonResponse
@@ -112,13 +85,198 @@ class OrderController extends Controller
         }
     }
 
-    public function show(Order $order)
+    public function myOrders(Request $request): JsonResponse
     {
+        $filters = $request->only([
+            'status',
+            'payment_status',
+            'from_date',
+            'to_date'
+        ]);
+
+        $orders = $this->orderService->getUserOrders(
+            $request->user(),
+            $filters
+        );
+
+        return $this->successResponse(
+            OrderResource::collection($orders),
+            'Orders retrieved successfully'
+        );
+    }
+
+    public function myOrder(Request $request, Order $order): JsonResponse
+    {
+        if ($order->user_id !== $request->user()->id) {
+            return $this->errorResponse(
+                'Unauthorized access',
+                Response::HTTP_FORBIDDEN
+            );
+        }
         $order->load(['user', 'items.product', 'transactions']);
         return $this->successResponse(
             new OrderResource($order),
-            'Order fetch successfully',
-            Response::HTTP_OK
+            'Order retrieved successfully'
+        );
+    }
+
+    public function updateMyOrderStatus(
+        UpdateOrderStatusRequest $request,
+        Order $order
+    ): JsonResponse {
+        try {
+            $updatedOrder = $this->orderService->updateOrderStatus(
+                $order,
+                $request->validated('status')
+            );
+
+            return $this->successResponse(
+                new OrderResource($updatedOrder),
+                'Order cancelled successfully'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                $e->getMessage(),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $isAdmin = $request->user()->hasRole([
+            RoleEnum::SUPER_ADMIN->value,
+            RoleEnum::ADMIN->value
+        ]);
+
+        if (!$isAdmin) {
+            return $this->errorResponse(
+                'Unauthorized access',
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
+        $filters = $request->only([
+            'reference',
+            'status',
+            'payment_status',
+            'payment_method',
+            'delivery_method',
+            'user_id',
+            'from_date',
+            'to_date',
+            'min_total',
+            'max_total',
+            'search',
+            'sort_by',
+            'sort_direction',
+            'confirmed_from',
+            'confirmed_to',
+        ]);
+
+        $orders = $this->orderService->getOrders($filters);
+
+        return $this->successResponse(
+            OrderResource::collection($orders),
+            'Orders retrieved successfully'
+        );
+    }
+
+    public function show(Request $request, Order $order): JsonResponse
+    {
+        if (!$request->user()->hasRole([RoleEnum::SUPER_ADMIN->value, RoleEnum::ADMIN->value])) {
+            return $this->errorResponse(
+                'Unauthorized access',
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
+        return $this->successResponse(
+            new OrderResource($order),
+            'Order retrieved successfully'
+        );
+    }
+
+    public function update(
+        UpdateOrderRequest $request,
+        Order $order
+    ): JsonResponse {
+        try {
+            $updatedOrder = $this->orderService->updateOrder(
+                $order,
+                $request->validated()
+            );
+
+            return $this->successResponse(
+                new OrderResource($updatedOrder),
+                'Order updated successfully'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                $e->getMessage(),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+    }
+
+    public function updateStatus(
+        UpdateOrderStatusRequest $request,
+        Order $order
+    ): JsonResponse {
+        try {
+            $updatedOrder = $this->orderService->updateOrderStatus(
+                $order,
+                $request->validated('status')
+            );
+
+            return $this->successResponse(
+                new OrderResource($updatedOrder),
+                'Order status updated successfully'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                $e->getMessage(),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+    }
+
+    public function destroy(Request $request, Order $order): JsonResponse
+    {
+        if (!$request->user()->hasRole(RoleEnum::SUPER_ADMIN->value)) {
+            return $this->errorResponse(
+                'Only super admins can delete orders',
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
+        try {
+            $this->orderService->deleteOrder($order);
+
+            return $this->successResponse(
+                null,
+                'Order deleted successfully'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                $e->getMessage(),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+    }
+
+    public function bulkUpdateStatus(BulkUpdateOrderStatusRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $result = $this->orderService->bulkUpdateStatus(
+            $validated['order_references'],
+            $validated['status']
+        );
+
+        return $this->successResponse(
+            $result,
+            "Successfully updated {$result['updated_count']} order(s)"
         );
     }
 

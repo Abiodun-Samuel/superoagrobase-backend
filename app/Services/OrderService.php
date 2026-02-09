@@ -11,40 +11,126 @@ use Illuminate\Database\Eloquent\Collection;
 
 class OrderService
 {
-    public function getOrders(array $filters, ?int $userId = null): Collection
+    protected function getBaseQuery(): Builder
     {
-        $query = Order::query()
+        return Order::query()
             ->with([
                 'user:id,first_name,last_name,email,phone_number,avatar',
-                'items.product:id,slug,title,image,pack_size,price,stock',
-                'transactions'
+                'items' => function ($query) {
+                    $query->select([
+                        'id',
+                        'order_id',
+                        'product_id',
+                        'quantity',
+                        'price_at_purchase',
+                        'subtotal',
+                        'created_at',
+                        'updated_at'
+                    ])->with([
+                        'product:id,slug,title,image,pack_size,price,stock'
+                    ]);
+                },
+                'transactions' => function ($query) {
+                    $query->select([
+                        'id',
+                        'order_id',
+                        'reference',
+                        'transaction_reference',
+                        'amount',
+                        'status',
+                        'channel',
+                        'currency',
+                        'metadata',
+                        'ip_address',
+                        'created_at',
+                        'updated_at'
+                    ])->latest();
+                }
             ])
-            ->latest('created_at');
+            ->select([
+                'id',
+                'reference',
+                'user_id',
+                'delivery_details',
+                'delivery_method',
+                'payment_method',
+                'payment_gateway',
+                'payment_status',
+                'subtotal',
+                'tax',
+                'tax_rate',
+                'shipping',
+                'total',
+                'status',
+                'confirmed_at',
+                'paid_at',
+                'shipped_at',
+                'delivered_at',
+                'cancelled_at',
+                'created_at',
+                'updated_at'
+            ]);
+    }
 
-        // User scope - users can only see their own orders
+    public function getOrders(array $filters = [], ?int $userId = null): Collection
+    {
+        $query = $this->getBaseQuery();
+
         if ($userId) {
             $query->where('user_id', $userId);
         }
 
-        // Apply filters
         $this->applyFilters($query, $filters);
 
+        if (empty($filters['sort_by'])) {
+            $query->latest('created_at');
+        }
+
         return $query->get();
+    }
+
+    public function getUserOrders(User $user, array $filters = []): Collection
+    {
+        $query = $this->getBaseQuery()->where('user_id', $user->id);
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['payment_status'])) {
+            $query->where('payment_status', $filters['payment_status']);
+        }
+
+        return $query->latest('created_at')->get();
+    }
+
+    public function getOrderByReference(string $reference): Order
+    {
+        return $this->getBaseQuery()
+            ->where('reference', $reference)
+            ->firstOrFail();
+    }
+
+    public function getUserOrderByReference(User $user, string $reference): Order
+    {
+        return $this->getBaseQuery()
+            ->where('user_id', $user->id)
+            ->where('reference', $reference)
+            ->firstOrFail();
     }
 
     public function createOrder(User $user, array $orderData, array $cartItems): Order
     {
         return DB::transaction(function () use ($user, $orderData, $cartItems) {
-            // Extract data
             $deliveryDetails = $orderData['delivery_details'];
             $pricing = $orderData['pricing'];
 
-            // Create the order
             $order = Order::create([
                 'user_id' => $user->id,
                 'delivery_details' => $deliveryDetails,
                 'delivery_method' => $orderData['delivery_method'],
                 'payment_method' => $orderData['payment_method'],
+                'payment_gateway' => $orderData['payment_gateway'] ?? null,
                 'subtotal' => $pricing['subtotal'],
                 'tax' => $pricing['tax'],
                 'tax_rate' => $pricing['tax_rate'],
@@ -66,39 +152,142 @@ class OrderService
         });
     }
 
+    public function updateOrderStatus(Order $order, string $status): Order
+    {
+        DB::beginTransaction();
+
+        try {
+            $updates = ['status' => $status];
+
+            switch ($status) {
+                case 'confirmed':
+                    if (!$order->confirmed_at) {
+                        $updates['confirmed_at'] = now();
+                    }
+                    break;
+                case 'shipped':
+                    if (!$order->shipped_at) {
+                        $updates['shipped_at'] = now();
+                    }
+                    break;
+                case 'delivered':
+                    if (!$order->delivered_at) {
+                        $updates['delivered_at'] = now();
+                    }
+                    break;
+                case 'cancelled':
+                    if (!$order->cancelled_at) {
+                        $updates['cancelled_at'] = now();
+                    }
+                    break;
+            }
+
+            $order->update($updates);
+
+            DB::commit();
+
+            $order->load(['user', 'items.product', 'transactions']);
+
+            return $order;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function updateOrder(Order $order, array $data): Order
+    {
+        DB::beginTransaction();
+
+        try {
+            $order->update($data);
+
+            DB::commit();
+
+            $order->load(['user', 'items.product', 'transactions']);
+
+            return $order;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function deleteOrder(Order $order): bool
+    {
+        return $order->delete();
+    }
+
+    public function bulkUpdateStatus(array $references, string $status): array
+    {
+        $updated = 0;
+        $failed = 0;
+        $errors = [];
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($references as $reference) {
+                try {
+                    $order = $this->getOrderByReference($reference);
+                    $this->updateOrderStatus($order, $status);
+                    $updated++;
+                } catch (\Exception $e) {
+                    $failed++;
+                    $errors[] = [
+                        'reference' => $reference,
+                        'error' => $e->getMessage()
+                    ];
+                }
+            }
+
+            DB::commit();
+
+            return [
+                'updated_count' => $updated,
+                'failed_count' => $failed,
+                'errors' => $errors
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
     protected function applyFilters(Builder $query, array $filters): void
     {
-        // Filter by reference
         if (!empty($filters['reference'])) {
             $query->where('reference', 'like', '%' . $filters['reference'] . '%');
         }
 
-        // Filter by status
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if (is_array($filters['status'])) {
+                $query->whereIn('status', $filters['status']);
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
-        // Filter by payment status
         if (!empty($filters['payment_status'])) {
-            $query->where('payment_status', $filters['payment_status']);
+            if (is_array($filters['payment_status'])) {
+                $query->whereIn('payment_status', $filters['payment_status']);
+            } else {
+                $query->where('payment_status', $filters['payment_status']);
+            }
         }
 
-        // Filter by payment method
         if (!empty($filters['payment_method'])) {
             $query->where('payment_method', $filters['payment_method']);
         }
 
-        // Filter by delivery method
         if (!empty($filters['delivery_method'])) {
             $query->where('delivery_method', $filters['delivery_method']);
         }
 
-        // Filter by user (admin only)
         if (!empty($filters['user_id'])) {
             $query->where('user_id', $filters['user_id']);
         }
 
-        // Filter by date range
         if (!empty($filters['from_date'])) {
             $query->whereDate('created_at', '>=', $filters['from_date']);
         }
@@ -107,17 +296,22 @@ class OrderService
             $query->whereDate('created_at', '<=', $filters['to_date']);
         }
 
-        // Filter by minimum total
         if (!empty($filters['min_total'])) {
             $query->where('total', '>=', $filters['min_total']);
         }
 
-        // Filter by maximum total
         if (!empty($filters['max_total'])) {
             $query->where('total', '<=', $filters['max_total']);
         }
 
-        // Search in delivery details
+        if (!empty($filters['confirmed_from'])) {
+            $query->whereDate('confirmed_at', '>=', $filters['confirmed_from']);
+        }
+
+        if (!empty($filters['confirmed_to'])) {
+            $query->whereDate('confirmed_at', '<=', $filters['confirmed_to']);
+        }
+
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
@@ -132,7 +326,6 @@ class OrderService
             });
         }
 
-        // Sort
         if (!empty($filters['sort_by'])) {
             $direction = $filters['sort_direction'] ?? 'desc';
             $query->orderBy($filters['sort_by'], $direction);

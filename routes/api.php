@@ -63,15 +63,18 @@ Route::get('/vendor-requests', [VendorRequestController::class, 'getByEmail']);
 // });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::prefix('orders')->group(function () {
-        Route::get('/my-orders', [OrderController::class, 'myOrders'])
+    // ==================== USER ORDER ROUTES ====================
+    Route::prefix('orders')->name('my-orders.')->group(function () {
+        Route::post('/complete', [OrderController::class, 'completeOrder'])
+            ->name('orders.complete');
+        Route::get('/', [OrderController::class, 'myOrders'])
             ->name('index');
-        Route::get('/', [OrderController::class, 'index']);
-        Route::post('/complete', [OrderController::class, 'completeOrder']);
+        Route::get('/{order}', [OrderController::class, 'myOrder'])
+            ->name('show');
         Route::patch('/{order}/status', [OrderController::class, 'updateMyOrderStatus'])
             ->name('update-status');
-        Route::get('/{order}', [OrderController::class, 'show']);
     });
+
     //Transactions
     Route::prefix('transactions')->group(function () {
         Route::get('/verify', [TransactionController::class, 'verify']);
@@ -99,17 +102,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('orders')->name('orders.')->group(function () {
             Route::get('/', [OrderController::class, 'index'])
                 ->name('index');
-            Route::post('/bulk-update-status', [OrderController::class, 'bulkUpdateStatus'])
-                ->name('bulk-update-status');
             Route::get('/{order}', [OrderController::class, 'show'])
                 ->name('show');
             Route::put('/{order}', [OrderController::class, 'update'])
                 ->name('update');
             Route::patch('/{order}/status', [OrderController::class, 'updateStatus'])
                 ->name('update-status');
-            Route::delete('/{order}', [OrderController::class, 'destroy'])
-                ->middleware('role:super_admin')
-                ->name('destroy');
+            Route::post('/bulk-update-status', [OrderController::class, 'bulkUpdateStatus'])
+                ->name('bulk-update-status');
         });
+    });
+    //super admin
+    Route::middleware(['auth:sanctum', 'role:super_admin'])->group(function () {
+        Route::delete('/orders/{order}', [OrderController::class, 'destroy'])
+            ->name('orders.destroy');
     });
 });
