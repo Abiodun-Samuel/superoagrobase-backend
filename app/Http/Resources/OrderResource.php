@@ -39,10 +39,6 @@ class OrderResource extends JsonResource
 
             // Transactions - Using TransactionResource
             'transactions' => TransactionResource::collection($this->whenLoaded('transactions')),
-            'latest_transaction' => $this->when(
-                $this->relationLoaded('transactions') && $this->transactions->isNotEmpty(),
-                fn() => new TransactionResource($this->transactions->first())
-            ),
 
             // Delivery Information
             'delivery_details' => $this->delivery_details,

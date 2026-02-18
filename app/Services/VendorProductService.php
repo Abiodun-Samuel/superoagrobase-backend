@@ -41,7 +41,8 @@ class VendorProductService
         $this->applySorting($query, $sort);
 
         $results = $query->with([
-            'product:id,title,sub_title,category_id,subcategory_id,image,brands,description',
+            'vendor',
+            'product:id,title,sub_title,category_id,subcategory_id,image,brands,description,slug',
             'product.category:id,title,slug',
             'product.subcategory:id,title,slug'
         ])->get();
@@ -188,17 +189,7 @@ class VendorProductService
         DB::beginTransaction();
 
         try {
-            $deleted = 0;
-
-            foreach ($ids as $id) {
-                $vendorProduct = VendorProduct::where('vendor_id', Auth::id())
-                    ->find($id);
-
-                if ($vendorProduct) {
-                    $vendorProduct->delete();
-                    $deleted++;
-                }
-            }
+            $deleted = VendorProduct::whereIn('id', $ids)->delete();
 
             DB::commit();
 

@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\VendorRequestController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContactController;
@@ -9,7 +12,9 @@ use App\Http\Controllers\NewsletterSubscriptionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,15 +29,9 @@ Route::prefix('auth')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
-        // Route::get('/me', [AuthController::class, 'me']);
-        // //Profile
-        // Route::post('/change-password', [AuthController::class, 'changePassword']);
-        // Route::get('/profile', [AuthController::class, 'getProfile']);
-        // Route::put('/profile', [AuthController::class, 'updateProfile']);
     });
 });
 
-// Route::middleware('guest')->group(function () {
 Route::post('contact/submit', [ContactController::class, 'submit']);
 Route::get('categories', [CategoryController::class, 'index']);
 Route::post('/newsletter/subscribe', [NewsletterSubscriptionController::class, 'store']);
@@ -52,8 +51,15 @@ Route::prefix('cart')->group(function () {
     Route::post('/clear', [CartController::class, 'clear']);
 });
 
+
 Route::prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
+});
+
+Route::prefix('blogs')->group(function () {
+    Route::get('/published', [BlogController::class, 'published']);
+    Route::get('/featured', [BlogController::class, 'featured']);
+    Route::get('/{blog}', [BlogController::class, 'show']);
 });
 
 Route::post('/transactions/webhook', [TransactionController::class, 'webhook']);
@@ -63,6 +69,12 @@ Route::get('/vendor-requests', [VendorRequestController::class, 'getByEmail']);
 // });
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('reviews')->group(function () {
+        Route::post('/', [ReviewController::class, 'store']);
+        Route::put('/', [ReviewController::class, 'update']);
+        Route::delete('/', [ReviewController::class, 'destroy']);
+    });
+
     // ==================== USER ORDER ROUTES ====================
     Route::prefix('orders')->name('my-orders.')->group(function () {
         Route::post('/complete', [OrderController::class, 'completeOrder'])
@@ -73,6 +85,15 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('show');
         Route::patch('/{order}/status', [OrderController::class, 'updateMyOrderStatus'])
             ->name('update-status');
+    });
+
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [UserProfileController::class, 'show'])->name('show');
+        Route::put('/basic-info', [UserProfileController::class, 'updateBasicInfo'])->name('update.basic');
+        Route::put('/personal-details', [UserProfileController::class, 'updatePersonalDetails'])->name('update.personal');
+        Route::put('/address', [UserProfileController::class, 'updateAddress'])->name('update.address');
+        Route::put('/preferences', [UserProfileController::class, 'updatePreferences'])->name('update.preferences');
+        Route::post('/avatar', [UserProfileController::class, 'updateAvatar'])->name('update.avatar');
     });
 
     //Transactions
@@ -91,6 +112,32 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // admin
     Route::prefix('admin')->middleware(['role:admin'])->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard']);
+        Route::post('/dashboard/clear-cache', [AdminController::class, 'clearCache'])
+            ->name('admin.dashboard.clear-cache');
+        // Vendor Management (same as users, filter by role)
+        Route::prefix('users')->group(function () {
+            Route::get('/', [UserController::class, 'index']);
+            Route::get('/{user}', [UserController::class, 'show']);
+            Route::put('/{user}', [UserController::class, 'update']);
+            Route::delete('/{user}', [UserController::class, 'destroy']);
+            Route::post('/{user}/assign-role', [UserController::class, 'assignRole']);
+        });
+        // Product Management
+        Route::prefix('products')->group(function () {
+            Route::get('/', [ProductController::class, 'adminIndex']);
+            Route::post('/', [ProductController::class, 'store']);
+            Route::get('/{product}', [ProductController::class, 'adminShow']);
+            Route::put('/{product}', [ProductController::class, 'update']);
+            Route::delete('/{product}', [ProductController::class, 'destroy']);
+            Route::post('/bulk/feature', [ProductController::class, 'bulkUpdateFeatured'])->name('products.bulk-feature');
+        });
+        // Category Management
+        Route::apiResource('categories', CategoryController::class);
+
+        // Subcategory Management
+        Route::apiResource('subcategories', SubcategoryController::class);
+
         // vendor requests
         Route::prefix('vendor-requests')->group(function () {
             Route::get('/', [VendorRequestController::class, 'index']);
@@ -108,8 +155,12 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('update');
             Route::patch('/{order}/status', [OrderController::class, 'updateStatus'])
                 ->name('update-status');
-            Route::post('/bulk-update-status', [OrderController::class, 'bulkUpdateStatus'])
-                ->name('bulk-update-status');
+        });
+        Route::prefix('blogs')->name('blogs.')->group(function () {
+            Route::get('/', [BlogController::class, 'index']);
+            Route::post('/', [BlogController::class, 'store']);
+            Route::put('/{blog}', [BlogController::class, 'update']);
+            Route::delete('/{blog}', [BlogController::class, 'destroy']);
         });
     });
     //super admin

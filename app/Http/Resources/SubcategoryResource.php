@@ -14,6 +14,11 @@ class SubcategoryResource extends JsonResource
             'slug' => $this->slug,
             'image' => $this->image,
             'title' => $this->title,
+            'products_count' => $this->products_count,
+
+            'category' => CategoryResource::make(
+                $this->whenLoaded('category')
+            ),
         ];
     }
 }

@@ -42,9 +42,6 @@ class ProductResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
 
-            // 'price' => $this->price,
-            // 'stock' => $this->stock,
-
             // Pricing - Smart fallback to cheapest available vendor
             'price' => $this->when(
                 isset($this->calculated_price),
@@ -63,10 +60,8 @@ class ProductResource extends JsonResource
             'base_stock' => $this->stock,
 
             'has_vendor_pricing' => $this->has_vendor_pricing,
-            'vendors' => $this->when(
-                $this->relationLoaded('availableVendorProducts') || $request->boolean('include_vendors'),
-                fn() => $this->getVendorsWithPrices()
-            ),
+
+            'vendors' => VendorProductResource::collection($this->whenLoaded('vendorProducts')),
         ];
     }
     protected function computeBadges(): array

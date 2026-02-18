@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\VendorProduct\StoreVendorProductRequest;
+use App\Http\Requests\VendorProduct\UpdateVendorProductRequest;
 use App\Http\Resources\VendorProductResource;
 use App\Services\VendorProductService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VendorProductController extends Controller
 {
@@ -35,19 +38,10 @@ class VendorProductController extends Controller
     /**
      * Add products to catalog (handles both single and bulk)
      */
-    public function store(Request $request)
+    public function store(StoreVendorProductRequest $request)
     {
-        $validated = $request->validate([
-            'products' => 'required|array|min:1',
-            'products.*.vendor_id' => 'required|exists:users,id',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.price' => 'required|numeric|min:0',
-            'products.*.stock' => 'required|integer|min:0',
-            'products.*.is_available' => 'required|boolean',
-        ]);
-
         try {
-            $result = $this->vendorProductService->addProducts($validated['products']);
+            $result = $this->vendorProductService->addProducts($request->validated()['products']);
 
             $message = count($result['products']) === 1
                 ? 'Product added to your catalog successfully'
@@ -63,6 +57,7 @@ class VendorProductController extends Controller
                 201
             );
         } catch (\Exception $e) {
+
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
@@ -70,18 +65,10 @@ class VendorProductController extends Controller
     /**
      * Update products (handles both single and bulk)
      */
-    public function update(Request $request)
+    public function update(UpdateVendorProductRequest $request)
     {
-        $validated = $request->validate([
-            'products' => 'required|array|min:1',
-            'products.*.id' => 'required|exists:vendor_products,id',
-            'products.*.price' => 'sometimes|numeric|min:0',
-            'products.*.stock' => 'sometimes|integer|min:0',
-            'products.*.is_available' => 'sometimes|boolean',
-        ]);
-
         try {
-            $updated = $this->vendorProductService->updateProducts($validated['products']);
+            $updated = $this->vendorProductService->updateProducts($request->validated()['products']);
 
             $message = count($updated) === 1
                 ? 'Product updated successfully'
@@ -103,15 +90,19 @@ class VendorProductController extends Controller
     {
         $validated = $request->validate([
             'ids' => 'required|array|min:1',
-            'ids.*' => 'required|exists:vendor_products,id',
+            'ids.*' => 'required|integer|exists:vendor_products,id',
         ]);
 
         try {
             $deleted = $this->vendorProductService->deleteProducts($validated['ids']);
 
+            if ($deleted === 0) {
+                return $this->errorResponse('No products found to delete', 404);
+            }
+
             $message = $deleted === 1
-                ? 'Product removed from your catalog successfully'
-                : "{$deleted} product(s) removed from your catalog successfully";
+                ? 'Product removed successfully'
+                : "{$deleted} products removed successfully";
 
             return $this->successResponse(null, $message);
         } catch (\Exception $e) {

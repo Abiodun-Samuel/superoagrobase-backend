@@ -36,16 +36,6 @@ class VendorProduct extends Model
         return $this->belongsTo(Product::class);
     }
 
-    // ============================================
-    // Scopes
-    // ============================================
-
-    // public function scopeAvailable(Builder $query): Builder
-    // {
-    //     return $query->where('is_available', true);
-    //     // ->where('stock', '>', 0);
-    // }
-
     public function scopeByVendor(Builder $query, int $vendorId): Builder
     {
         return $query->where('vendor_id', $vendorId);

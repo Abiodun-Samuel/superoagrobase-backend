@@ -142,6 +142,8 @@ class OrderController extends Controller
         }
     }
 
+    // admin
+
     public function index(Request $request): JsonResponse
     {
         $isAdmin = $request->user()->hasRole([
@@ -190,7 +192,7 @@ class OrderController extends Controller
                 Response::HTTP_FORBIDDEN
             );
         }
-
+        $order->load(['user', 'items.product', 'transactions']);
         return $this->successResponse(
             new OrderResource($order),
             'Order retrieved successfully'
@@ -263,21 +265,6 @@ class OrderController extends Controller
                 Response::HTTP_BAD_REQUEST
             );
         }
-    }
-
-    public function bulkUpdateStatus(BulkUpdateOrderStatusRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-
-        $result = $this->orderService->bulkUpdateStatus(
-            $validated['order_references'],
-            $validated['status']
-        );
-
-        return $this->successResponse(
-            $result,
-            "Successfully updated {$result['updated_count']} order(s)"
-        );
     }
 
     private function getCartItems(string $sessionId, ?string $userId): array

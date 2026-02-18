@@ -179,7 +179,7 @@ class Transaction extends Model
             'qr' => 'QR Code',
             'bank_transfer' => 'Bank Transfer',
             'mobile_money' => 'Mobile Money',
-            default => ucfirst($this->channel ?? 'Unknown')
+            default => ucfirst($this->channel ?? '')
         };
     }
 

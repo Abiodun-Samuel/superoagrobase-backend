@@ -2,64 +2,72 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\SubcategoryService;
+use App\Http\Requests\StoreSubcategoryRequest;
+use App\Http\Requests\UpdateSubcategoryRequest;
+use App\Http\Resources\SubcategoryResource;
 use App\Models\Subcategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class SubcategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    protected SubcategoryService $subcategoryService;
+
+    public function __construct(SubcategoryService $subcategoryService)
     {
-        //
+        $this->subcategoryService = $subcategoryService;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index(): JsonResponse
     {
-        //
+        $subcategories = $this->subcategoryService->getAllSubcategories();
+
+        return $this->successResponse(
+            SubcategoryResource::collection($subcategories),
+            'Subcategories retrieved successfully'
+        );
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreSubcategoryRequest $request): JsonResponse
     {
-        //
+        $subcategory = $this->subcategoryService->createSubcategory($request->validated());
+
+        return $this->successResponse(
+            SubcategoryResource::make($subcategory),
+            'Subcategory created successfully',
+            Response::HTTP_CREATED
+        );
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Subcategory $subcategory)
+    public function show(Subcategory $subcategory): JsonResponse
     {
-        //
+        $subcategory->loadCount('products');
+
+        return $this->successResponse(
+            SubcategoryResource::make($subcategory),
+            'Subcategory retrieved successfully'
+        );
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Subcategory $subcategory)
+    public function update(UpdateSubcategoryRequest $request, Subcategory $subcategory): JsonResponse
     {
-        //
+        $subcategory = $this->subcategoryService->updateSubcategory($subcategory, $request->validated());
+
+        return $this->successResponse(
+            SubcategoryResource::make($subcategory),
+            'Subcategory updated successfully'
+        );
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Subcategory $subcategory)
+    public function destroy(Subcategory $subcategory): JsonResponse
     {
-        //
-    }
+        $this->subcategoryService->deleteSubcategory($subcategory);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Subcategory $subcategory)
-    {
-        //
+        return $this->successResponse(
+            null,
+            'Subcategory deleted successfully'
+        );
     }
 }

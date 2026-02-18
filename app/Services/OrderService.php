@@ -218,42 +218,6 @@ class OrderService
         return $order->delete();
     }
 
-    public function bulkUpdateStatus(array $references, string $status): array
-    {
-        $updated = 0;
-        $failed = 0;
-        $errors = [];
-
-        DB::beginTransaction();
-
-        try {
-            foreach ($references as $reference) {
-                try {
-                    $order = $this->getOrderByReference($reference);
-                    $this->updateOrderStatus($order, $status);
-                    $updated++;
-                } catch (\Exception $e) {
-                    $failed++;
-                    $errors[] = [
-                        'reference' => $reference,
-                        'error' => $e->getMessage()
-                    ];
-                }
-            }
-
-            DB::commit();
-
-            return [
-                'updated_count' => $updated,
-                'failed_count' => $failed,
-                'errors' => $errors
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
     protected function applyFilters(Builder $query, array $filters): void
     {
         if (!empty($filters['reference'])) {
