@@ -71,8 +71,8 @@ Route::get('/vendor-requests', [VendorRequestController::class, 'getByEmail']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('reviews')->group(function () {
         Route::post('/', [ReviewController::class, 'store']);
-        Route::put('/{reviews}', [ReviewController::class, 'update']);
-        Route::delete('/{reviews}', [ReviewController::class, 'destroy']);
+        Route::put('/{review}', [ReviewController::class, 'update']);
+        Route::delete('/{review}', [ReviewController::class, 'destroy']);
     });
 
     // ==================== USER ORDER ROUTES ====================
